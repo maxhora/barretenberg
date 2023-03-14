@@ -124,6 +124,7 @@ void UltraComposer::create_add_gate(const add_triple& in)
  * @param in Structure with variable indexes and wire selector values
  * @param include_next_gate_w_4 Switches on/off the addition of w_4 at the next index
  */
+// TODO(Cody): declaration uses different name for boolean arg
 void UltraComposer::create_big_add_gate(const add_quad& in, const bool include_next_gate_w_4)
 {
     ULTRA_SELECTOR_REFS

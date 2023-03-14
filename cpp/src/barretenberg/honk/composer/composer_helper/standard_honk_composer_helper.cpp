@@ -108,6 +108,7 @@ std::shared_ptr<bonk::proving_key> StandardHonkComposerHelper<CircuitConstructor
         return circuit_proving_key;
     }
     // Compute q_l, q_r, q_o, etc polynomials
+    // TODO(Cody): Passing of composer type here makes no sense.
     StandardHonkComposerHelper::compute_proving_key_base(circuit_constructor, plonk::ComposerType::STANDARD_HONK);
 
     // Compute sigma polynomials (we should update that late)
