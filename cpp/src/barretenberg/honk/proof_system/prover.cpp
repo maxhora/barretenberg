@@ -23,9 +23,9 @@
 
 namespace honk {
 
-using Fr = barretenberg::fr;
+using FF = barretenberg::fr;
 using Commitment = barretenberg::g1::affine_element;
-using Polynomial = barretenberg::Polynomial<Fr>;
+using Polynomial = barretenberg::Polynomial<FF>;
 using POLYNOMIAL = bonk::StandardArithmetization::POLYNOMIAL;
 
 /**
@@ -40,12 +40,12 @@ template <typename settings>
 Prover<settings>::Prover(std::vector<barretenberg::polynomial>&& wire_polys,
                          std::shared_ptr<bonk::proving_key> input_key,
                          const transcript::Manifest& input_manifest)
+    // TODO(Cody): get rid of num_challenge_bytes from settings.
     : transcript(input_manifest, settings::hash_type, settings::num_challenge_bytes)
     , wire_polynomials(wire_polys)
     , key(input_key)
-    , commitment_key(std::make_unique<pcs::kzg::CommitmentKey>(
-          input_key->circuit_size,
-          "../srs_db/ignition")) // TODO(Cody): Need better constructors for prover.
+    , commitment_key(std::make_unique<pcs::kzg::CommitmentKey>(input_key->circuit_size, "../srs_db/ignition"))
+// TODO(Cody): Need better constructors for prover.
 // , queue(proving_key.get(), &transcript)
 {
     // Note(luke): This could be done programmatically with some hacks but this isnt too bad and its nice to see the
@@ -109,22 +109,22 @@ template <typename settings> void Prover<settings>::compute_wire_commitments()
  * one batch inversion (at the expense of more multiplications)
  */
 // TODO(#222)(luke): Parallelize
-template <typename settings> Polynomial Prover<settings>::compute_grand_product_polynomial(Fr beta, Fr gamma)
+template <typename settings> Polynomial Prover<settings>::compute_grand_product_polynomial(FF beta, FF gamma)
 {
     using barretenberg::polynomial_arithmetic::copy_polynomial;
     static const size_t program_width = settings::program_width;
 
     // Allocate scratch space for accumulators
-    std::array<Fr*, program_width> numerator_accumulator;
-    std::array<Fr*, program_width> denominator_accumulator;
+    std::array<FF*, program_width> numerator_accumulator;
+    std::array<FF*, program_width> denominator_accumulator;
     for (size_t i = 0; i < program_width; ++i) {
-        numerator_accumulator[i] = static_cast<Fr*>(aligned_alloc(64, sizeof(Fr) * key->circuit_size));
-        denominator_accumulator[i] = static_cast<Fr*>(aligned_alloc(64, sizeof(Fr) * key->circuit_size));
+        numerator_accumulator[i] = static_cast<FF*>(aligned_alloc(64, sizeof(FF) * key->circuit_size));
+        denominator_accumulator[i] = static_cast<FF*>(aligned_alloc(64, sizeof(FF) * key->circuit_size));
     }
 
     // Populate wire and permutation polynomials
-    std::array<std::span<const Fr>, program_width> wires;
-    std::array<std::span<const Fr>, program_width> sigmas;
+    std::array<std::span<const FF>, program_width> wires;
+    std::array<std::span<const FF>, program_width> sigmas;
     for (size_t i = 0; i < program_width; ++i) {
         std::string sigma_id = "sigma_" + std::to_string(i + 1) + "_lagrange";
         wires[i] = wire_polynomials[i];
@@ -136,7 +136,7 @@ template <typename settings> Polynomial Prover<settings>::compute_grand_product_
     for (size_t i = 0; i < key->circuit_size; ++i) {
         for (size_t k = 0; k < program_width; ++k) {
             // Note(luke): this idx could be replaced by proper ID polys if desired
-            Fr idx = k * key->circuit_size + i;
+            FF idx = k * key->circuit_size + i;
             numerator_accumulator[k][i] = wires[k][i] + (idx * beta) + gamma;            // w_k(i) + β.(k*n+i) + γ
             denominator_accumulator[k][i] = wires[k][i] + (sigmas[k][i] * beta) + gamma; // w_k(i) + β.σ_k(i) + γ
         }
@@ -162,8 +162,8 @@ template <typename settings> Polynomial Prover<settings>::compute_grand_product_
     // Use Montgomery batch inversion to compute z_perm[i+1] = numerator_accumulator[0][i] /
     // denominator_accumulator[0][i]. At the end of this computation, the quotient numerator_accumulator[0] /
     // denominator_accumulator[0] is stored in numerator_accumulator[0].
-    Fr* inversion_coefficients = &denominator_accumulator[1][0]; // arbitrary scratch space
-    Fr inversion_accumulator = Fr::one();
+    FF* inversion_coefficients = &denominator_accumulator[1][0]; // arbitrary scratch space
+    FF inversion_accumulator = FF::one();
     for (size_t i = 0; i < key->circuit_size; ++i) {
         inversion_coefficients[i] = numerator_accumulator[0][i] * inversion_accumulator;
         inversion_accumulator *= denominator_accumulator[0][i];
@@ -227,7 +227,7 @@ template <typename settings> void Prover<settings>::execute_wire_commitments_rou
     // Add public inputs to transcript from the second wire polynomial
     const Polynomial& public_wires_source = wire_polynomials[1];
 
-    std::vector<Fr> public_wires;
+    std::vector<FF> public_wires;
     for (size_t i = 0; i < key->num_public_inputs; ++i) {
         public_wires.push_back(public_wires_source[i]);
     }
@@ -275,7 +275,7 @@ template <typename settings> void Prover<settings>::execute_relation_check_round
 {
     // queue.flush_queue(); // NOTE: Don't remove; we may reinstate the queue
 
-    using Sumcheck = sumcheck::Sumcheck<Fr,
+    using Sumcheck = sumcheck::Sumcheck<FF,
                                         Transcript,
                                         sumcheck::ArithmeticRelation,
                                         sumcheck::GrandProductComputationRelation,
@@ -299,7 +299,7 @@ template <typename settings> void Prover<settings>::execute_univariatization_rou
     const size_t NUM_UNSHIFTED_POLYS = bonk::StandardArithmetization::NUM_UNSHIFTED_POLYNOMIALS;
 
     // Construct MLE opening point u = (u_0, ..., u_{d-1})
-    std::vector<Fr> opening_point; // u
+    std::vector<FF> opening_point; // u
     for (size_t round_idx = 0; round_idx < key->log_circuit_size; round_idx++) {
         std::string label = "u_" + std::to_string(round_idx);
         opening_point.emplace_back(transcript.get_challenge_field_element(label));
@@ -307,8 +307,8 @@ template <typename settings> void Prover<settings>::execute_univariatization_rou
 
     // Generate batching challenge ρ and powers 1,ρ,…,ρᵐ⁻¹
     transcript.apply_fiat_shamir("rho");
-    Fr rho = Fr::serialize_from_buffer(transcript.get_challenge("rho").begin());
-    std::vector<Fr> rhos = Gemini::powers_of_rho(rho, NUM_POLYNOMIALS);
+    FF rho = FF::serialize_from_buffer(transcript.get_challenge("rho").begin());
+    std::vector<FF> rhos = Gemini::powers_of_rho(rho, NUM_POLYNOMIALS);
 
     // Get vector of multivariate evaluations produced by Sumcheck
     auto multivariate_evaluations = transcript.get_field_element_vector("multivariate_evaluations");

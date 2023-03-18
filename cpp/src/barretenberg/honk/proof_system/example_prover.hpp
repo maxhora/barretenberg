@@ -23,14 +23,14 @@
 
 namespace honk {
 
-using Fr = barretenberg::fr;
+using FF = barretenberg::fr;
 
-template <typename settings> class Prover {
+class ExampleProver {
 
   public:
-    Prover(std::vector<barretenberg::polynomial>&& wire_polys,
-           std::shared_ptr<bonk::proving_key> input_key = nullptr,
-           const transcript::Manifest& manifest = transcript::Manifest());
+    ExampleProver(std::vector<barretenberg::polynomial>&& wire_polys,
+                  std::shared_ptr<bonk::proving_key> input_key = nullptr,
+                  const transcript::Manifest& manifest = transcript::Manifest());
 
     void execute_preamble_round();
     void execute_wire_commitments_round();
@@ -44,17 +44,21 @@ template <typename settings> class Prover {
 
     void compute_wire_commitments();
 
-    barretenberg::polynomial compute_grand_product_polynomial(Fr beta, Fr gamma);
+    barretenberg::polynomial compute_grand_product_polynomial(FF beta, FF gamma);
 
     void construct_prover_polynomials();
 
     plonk::proof& export_proof();
     plonk::proof& construct_proof();
 
+    static constexpr size_t num_wires = 5;
     transcript::StandardTranscript transcript;
 
     std::vector<barretenberg::polynomial> wire_polynomials;
+    std::vector<barretenberg::polynomial> sorting_polynomials;
+    barretenberg::polynomial sorting_accumulator;
     barretenberg::polynomial z_permutation;
+    barretenberg::polynomial z_lookup;
 
     std::shared_ptr<bonk::proving_key> key;
 
@@ -62,7 +66,8 @@ template <typename settings> class Prover {
 
     // Container for spans of all polynomials required by the prover (i.e. all multivariates evaluated by Sumcheck).
     // TODO(Cody): This polynomial count should be supplied by flavor, not arithmetization.
-    std::array<std::span<Fr>, bonk::StandardArithmetization::POLYNOMIAL::COUNT> prover_polynomials;
+    // WORKTODO: specify number better
+    std::array<std::span<FF>, bonk::StandardArithmetization::POLYNOMIAL::COUNT> prover_polynomials;
 
     // Honk only needs a small portion of the functionality but may be fine to use existing work_queue
     // NOTE: this is not currently in use, but it may well be used in the future.
@@ -77,9 +82,6 @@ template <typename settings> class Prover {
     //     return queue.get_scalar_multiplication_size(work_item_number);
     // }
 
-    // This makes 'settings' accesible from Prover
-    using settings_ = settings;
-
     pcs::gemini::ProverOutput<pcs::kzg::Params> gemini_output;
     pcs::shplonk::ProverOutput<pcs::kzg::Params> shplonk_output;
 
@@ -91,9 +93,5 @@ template <typename settings> class Prover {
   private:
     plonk::proof proof;
 };
-
-extern template class Prover<plonk::standard_settings>;
-
-using StandardProver = Prover<plonk::standard_settings>;
 
 } // namespace honk

@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <memory>
 #include "barretenberg/plonk/proof_system/constants.hpp"
-#include "./verifier.hpp"
+#include "./example_verifier.hpp"
 #include "barretenberg/plonk/proof_system/public_inputs/public_inputs.hpp"
 #include "barretenberg/ecc/curves/bn254/fr.hpp"
 #include "barretenberg/honk/pcs/commitment_key.hpp"
@@ -27,21 +27,20 @@ using namespace barretenberg;
 using namespace honk::sumcheck;
 
 namespace honk {
-template <typename program_settings>
-Verifier<program_settings>::Verifier(std::shared_ptr<bonk::verification_key> verifier_key,
-                                     const transcript::Manifest& input_manifest)
+
+ExampleVerifier::ExampleVerifier(std::shared_ptr<bonk::verification_key> verifier_key,
+                                 const transcript::Manifest& input_manifest)
     : manifest(input_manifest)
     , key(verifier_key)
 {}
 
-template <typename program_settings>
-Verifier<program_settings>::Verifier(Verifier&& other)
+ExampleVerifier::ExampleVerifier(ExampleVerifier&& other)
     : manifest(other.manifest)
     , key(other.key)
     , kate_verification_key(std::move(other.kate_verification_key))
 {}
 
-template <typename program_settings> Verifier<program_settings>& Verifier<program_settings>::operator=(Verifier&& other)
+ExampleVerifier& ExampleVerifier::operator=(ExampleVerifier&& other)
 {
     key = other.key;
     manifest = other.manifest;
@@ -77,26 +76,27 @@ template <typename program_settings> Verifier<program_settings>& Verifier<progra
         [Q]_1,
         [W]_1
 */
-template <typename program_settings> bool Verifier<program_settings>::verify_proof(const plonk::proof& proof)
+bool ExampleVerifier::verify_proof(const plonk::proof& proof)
 {
-    using FF = typename program_settings::fr;
+    using FF = barretenberg::fr; // WORKNOTE: This is a hack.
     using Commitment = barretenberg::g1::element;
-    using Transcript = typename program_settings::Transcript;
+    using Transcript = transcript::StandardTranscript; // WORKNOTE: There is only one transcript?
     using Gemini = pcs::gemini::MultilinearReductionScheme<pcs::kzg::Params>;
     using Shplonk = pcs::shplonk::SingleBatchOpeningScheme<pcs::kzg::Params>;
     using KZG = pcs::kzg::UnivariateOpeningScheme<pcs::kzg::Params>;
+    // WORKTODO: these come from the flavor
     const size_t NUM_POLYNOMIALS = bonk::StandardArithmetization::NUM_POLYNOMIALS;
     const size_t NUM_UNSHIFTED = bonk::StandardArithmetization::NUM_UNSHIFTED_POLYNOMIALS;
     const size_t NUM_PRECOMPUTED = bonk::StandardArithmetization::NUM_PRECOMPUTED_POLYNOMIALS;
 
-    key->program_width = program_settings::program_width;
+    key->program_width = num_wires;
 
     size_t log_n(numeric::get_msb(key->circuit_size));
 
     // Add the proof data to the transcript, according to the manifest. Also initialise the transcript's hash type
     // and challenge bytes.
     auto transcript = transcript::StandardTranscript(
-        proof.proof_data, manifest, program_settings::hash_type, program_settings::num_challenge_bytes);
+        proof.proof_data, manifest /* , program_settings::hash_type, program_settings::num_challenge_bytes */);
 
     // Add the circuit size and the number of public inputs) to the transcript.
     transcript.add_element("circuit_size",
@@ -113,7 +113,7 @@ template <typename program_settings> bool Verifier<program_settings>::verify_pro
 
     // Compute challenges from the proof data, based on the manifest, using the Fiat-Shamir heuristic
     transcript.apply_fiat_shamir("init");
-    transcript.apply_fiat_shamir("eta");
+    transcript.apply_fiat_shamir("eta"); // WORKTODO: this is not used for standard... challenges specified where?
     transcript.apply_fiat_shamir("beta");
     transcript.apply_fiat_shamir("alpha");
     for (size_t idx = 0; idx < log_n; idx++) {
@@ -128,11 +128,10 @@ template <typename program_settings> bool Verifier<program_settings>::verify_pro
     // // TODO(Cody): Compute some basic public polys like id(X), pow(X), and any required Lagrange polys
 
     // Execute Sumcheck Verifier
-    auto sumcheck = Sumcheck<FF,
-                             Transcript,
-                             ArithmeticRelation,
-                             GrandProductComputationRelation,
-                             GrandProductInitializationRelation>(transcript);
+    // WORKTODO: add relations
+    auto sumcheck =
+        Sumcheck<FF, Transcript, ArithmeticRelation, GrandProductComputationRelation, GrandProductInitializationRelation
+                 /* WORKTODO: add more relations. Order must match; alias sumcheck class? */>(transcript);
     bool sumcheck_result = sumcheck.execute_verifier();
 
     // Execute Gemini/Shplonk verification:
@@ -151,14 +150,14 @@ template <typename program_settings> bool Verifier<program_settings>::verify_pro
     }
 
     // Compute powers of batching challenge rho
-    Fr rho = Fr::serialize_from_buffer(transcript.get_challenge("rho").begin());
-    std::vector<Fr> rhos = Gemini::powers_of_rho(rho, NUM_POLYNOMIALS);
+    FF rho = FF::serialize_from_buffer(transcript.get_challenge("rho").begin());
+    std::vector<FF> rhos = Gemini::powers_of_rho(rho, NUM_POLYNOMIALS);
 
     // Get vector of multivariate evaluations produced by Sumcheck
     auto multivariate_evaluations = transcript.get_field_element_vector("multivariate_evaluations");
 
     // Compute batched multivariate evaluation
-    Fr batched_evaluation = Fr::zero();
+    FF batched_evaluation = FF::zero();
     for (size_t i = 0; i < NUM_POLYNOMIALS; ++i) {
         batched_evaluation += multivariate_evaluations[i] * rhos[i];
     }
@@ -209,7 +208,5 @@ template <typename program_settings> bool Verifier<program_settings>::verify_pro
 
     return result;
 }
-
-template class Verifier<honk::standard_verifier_settings>;
 
 } // namespace honk

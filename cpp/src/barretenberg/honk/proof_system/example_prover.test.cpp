@@ -1,4 +1,4 @@
-#include "prover.hpp"
+#include "example_prover.hpp"
 #include "barretenberg/honk/composer/standard_honk_composer.hpp"
 #include "barretenberg/polynomials/polynomial.hpp"
 

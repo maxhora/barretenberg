@@ -1,4 +1,4 @@
-#include "prover.hpp"
+#include "example_prover.hpp"
 #include <algorithm>
 #include <cstddef>
 #include "barretenberg/honk/sumcheck/sumcheck.hpp" // will need
@@ -23,24 +23,24 @@
 
 namespace honk {
 
-using Fr = barretenberg::fr;
+using FF = barretenberg::fr;
 using Commitment = barretenberg::g1::affine_element;
-using Polynomial = barretenberg::Polynomial<Fr>;
+using Polynomial = barretenberg::Polynomial<FF>;
 using POLYNOMIAL = bonk::StandardArithmetization::POLYNOMIAL;
 
 /**
- * Create Prover from proving key, witness and manifest.
+ * Create ExampleProver from proving key, witness and manifest.
  *
  * @param input_key Proving key.
  * @param input_manifest Input manifest
  *
  * @tparam settings Settings class.
  * */
-template <typename settings>
-Prover<settings>::Prover(std::vector<barretenberg::polynomial>&& wire_polys,
-                         std::shared_ptr<bonk::proving_key> input_key,
-                         const transcript::Manifest& input_manifest)
-    : transcript(input_manifest, settings::hash_type, settings::num_challenge_bytes)
+
+ExampleProver::ExampleProver(std::vector<barretenberg::polynomial>&& wire_polys,
+                             std::shared_ptr<bonk::proving_key> input_key,
+                             const transcript::Manifest& input_manifest)
+    : transcript(input_manifest /* , settings::hash_type, settings::num_challenge_bytes */)
     , wire_polynomials(wire_polys)
     , key(input_key)
     , commitment_key(std::make_unique<pcs::kzg::CommitmentKey>(
@@ -50,6 +50,7 @@ Prover<settings>::Prover(std::vector<barretenberg::polynomial>&& wire_polys,
 {
     // Note(luke): This could be done programmatically with some hacks but this isnt too bad and its nice to see the
     // polys laid out explicitly.
+    // WORKTODO: This has to change
     prover_polynomials[POLYNOMIAL::Q_C] = key->polynomial_cache.get("q_c_lagrange");
     prover_polynomials[POLYNOMIAL::Q_L] = key->polynomial_cache.get("q_1_lagrange");
     prover_polynomials[POLYNOMIAL::Q_R] = key->polynomial_cache.get("q_2_lagrange");
@@ -73,9 +74,9 @@ Prover<settings>::Prover(std::vector<barretenberg::polynomial>&& wire_polys,
  * - Add PI to transcript (I guess PI will stay in w_2 for now?)
  *
  * */
-template <typename settings> void Prover<settings>::compute_wire_commitments()
+void ExampleProver::compute_wire_commitments()
 {
-    for (size_t i = 0; i < settings::program_width; ++i) {
+    for (size_t i = 0; i < num_wires; ++i) {
         auto commitment = commitment_key->commit(wire_polynomials[i]);
 
         transcript.add_element("W_" + std::to_string(i + 1), commitment.to_buffer());
@@ -85,7 +86,7 @@ template <typename settings> void Prover<settings>::compute_wire_commitments()
 /**
  * @brief Compute the permutation grand product polynomial Z_perm(X)
  * *
- * @detail (This description assumes program_width 3). Z_perm may be defined in terms of its values
+ * @detail (This description assumes num_wires 3). Z_perm may be defined in terms of its values
  * on X_i = 0,1,...,n-1 as Z_perm[0] = 1 and for i = 1:n-1
  *
  *                  (w_1(j) + β⋅id_1(j) + γ) ⋅ (w_2(j) + β⋅id_2(j) + γ) ⋅ (w_3(j) + β⋅id_3(j) + γ)
@@ -99,8 +100,8 @@ template <typename settings> void Prover<settings>::compute_wire_commitments()
  * Z_perm[i] = ∏ --------------------------
  *                B_1(j) ⋅ B_2(j) ⋅ B_3(j)
  *
- * Step 1) Compute the 2*program_width length-n polynomials A_i and B_i
- * Step 2) Compute the 2*program_width length-n polynomials ∏ A_i(j) and ∏ B_i(j)
+ * Step 1) Compute the 2*num_wires length-n polynomials A_i and B_i
+ * Step 2) Compute the 2*num_wires length-n polynomials ∏ A_i(j) and ∏ B_i(j)
  * Step 3) Compute the two length-n polynomials defined by
  *          numer[i] = ∏ A_1(j)⋅A_2(j)⋅A_3(j), and denom[i] = ∏ B_1(j)⋅B_2(j)⋅B_3(j)
  * Step 4) Compute Z_perm[i+1] = numer[i]/denom[i] (recall: Z_perm[0] = 1)
@@ -109,23 +110,24 @@ template <typename settings> void Prover<settings>::compute_wire_commitments()
  * one batch inversion (at the expense of more multiplications)
  */
 // TODO(#222)(luke): Parallelize
-template <typename settings> Polynomial Prover<settings>::compute_grand_product_polynomial(Fr beta, Fr gamma)
+// WORKTODO: this should go in the composer helper library
+barretenberg::polynomial ExampleProver::compute_grand_product_polynomial(FF beta, FF gamma)
 {
     using barretenberg::polynomial_arithmetic::copy_polynomial;
-    static const size_t program_width = settings::program_width;
+    static const size_t num_wires = 5;
 
     // Allocate scratch space for accumulators
-    std::array<Fr*, program_width> numerator_accumulator;
-    std::array<Fr*, program_width> denominator_accumulator;
-    for (size_t i = 0; i < program_width; ++i) {
-        numerator_accumulator[i] = static_cast<Fr*>(aligned_alloc(64, sizeof(Fr) * key->circuit_size));
-        denominator_accumulator[i] = static_cast<Fr*>(aligned_alloc(64, sizeof(Fr) * key->circuit_size));
+    std::array<FF*, num_wires> numerator_accumulator;
+    std::array<FF*, num_wires> denominator_accumulator;
+    for (size_t i = 0; i < num_wires; ++i) {
+        numerator_accumulator[i] = static_cast<FF*>(aligned_alloc(64, sizeof(FF) * key->circuit_size));
+        denominator_accumulator[i] = static_cast<FF*>(aligned_alloc(64, sizeof(FF) * key->circuit_size));
     }
 
     // Populate wire and permutation polynomials
-    std::array<std::span<const Fr>, program_width> wires;
-    std::array<std::span<const Fr>, program_width> sigmas;
-    for (size_t i = 0; i < program_width; ++i) {
+    std::array<std::span<const FF>, num_wires> wires;
+    std::array<std::span<const FF>, num_wires> sigmas;
+    for (size_t i = 0; i < num_wires; ++i) {
         std::string sigma_id = "sigma_" + std::to_string(i + 1) + "_lagrange";
         wires[i] = wire_polynomials[i];
         sigmas[i] = key->polynomial_cache.get(sigma_id);
@@ -134,16 +136,16 @@ template <typename settings> Polynomial Prover<settings>::compute_grand_product_
     // Step (1)
     // TODO(#222)(kesha): Change the order to engage automatic prefetching and get rid of redundant computation
     for (size_t i = 0; i < key->circuit_size; ++i) {
-        for (size_t k = 0; k < program_width; ++k) {
+        for (size_t k = 0; k < num_wires; ++k) {
             // Note(luke): this idx could be replaced by proper ID polys if desired
-            Fr idx = k * key->circuit_size + i;
+            FF idx = k * key->circuit_size + i;
             numerator_accumulator[k][i] = wires[k][i] + (idx * beta) + gamma;            // w_k(i) + β.(k*n+i) + γ
             denominator_accumulator[k][i] = wires[k][i] + (sigmas[k][i] * beta) + gamma; // w_k(i) + β.σ_k(i) + γ
         }
     }
 
     // Step (2)
-    for (size_t k = 0; k < program_width; ++k) {
+    for (size_t k = 0; k < num_wires; ++k) {
         for (size_t i = 0; i < key->circuit_size - 1; ++i) {
             numerator_accumulator[k][i + 1] *= numerator_accumulator[k][i];
             denominator_accumulator[k][i + 1] *= denominator_accumulator[k][i];
@@ -152,7 +154,7 @@ template <typename settings> Polynomial Prover<settings>::compute_grand_product_
 
     // Step (3)
     for (size_t i = 0; i < key->circuit_size; ++i) {
-        for (size_t k = 1; k < program_width; ++k) {
+        for (size_t k = 1; k < num_wires; ++k) {
             numerator_accumulator[0][i] *= numerator_accumulator[k][i];
             denominator_accumulator[0][i] *= denominator_accumulator[k][i];
         }
@@ -162,8 +164,8 @@ template <typename settings> Polynomial Prover<settings>::compute_grand_product_
     // Use Montgomery batch inversion to compute z_perm[i+1] = numerator_accumulator[0][i] /
     // denominator_accumulator[0][i]. At the end of this computation, the quotient numerator_accumulator[0] /
     // denominator_accumulator[0] is stored in numerator_accumulator[0].
-    Fr* inversion_coefficients = &denominator_accumulator[1][0]; // arbitrary scratch space
-    Fr inversion_accumulator = Fr::one();
+    FF* inversion_coefficients = &denominator_accumulator[1][0]; // arbitrary scratch space
+    FF inversion_accumulator = FF::one();
     for (size_t i = 0; i < key->circuit_size; ++i) {
         inversion_coefficients[i] = numerator_accumulator[0][i] * inversion_accumulator;
         inversion_accumulator *= denominator_accumulator[0][i];
@@ -182,7 +184,7 @@ template <typename settings> Polynomial Prover<settings>::compute_grand_product_
     copy_polynomial(numerator_accumulator[0], &z_perm[1], key->circuit_size - 1, key->circuit_size - 1);
 
     // free memory allocated for scratch space
-    for (size_t k = 0; k < program_width; ++k) {
+    for (size_t k = 0; k < num_wires; ++k) {
         aligned_free(numerator_accumulator[k]);
         aligned_free(denominator_accumulator[k]);
     }
@@ -194,7 +196,7 @@ template <typename settings> Polynomial Prover<settings>::compute_grand_product_
  * - Add circuit size and PI size to transcript
  *
  * */
-template <typename settings> void Prover<settings>::execute_preamble_round()
+void ExampleProver::execute_preamble_round()
 {
     // Add some initial data to transcript (circuit size and PI size)
 
@@ -219,7 +221,7 @@ template <typename settings> void Prover<settings>::execute_preamble_round()
  * - compute wire commitments
  * - add public inputs to transcript (done explicitly in execute_first_round())
  * */
-template <typename settings> void Prover<settings>::execute_wire_commitments_round()
+void ExampleProver::execute_wire_commitments_round()
 {
     // queue.flush_queue(); // NOTE: Don't remove; we may reinstate the queue
     compute_wire_commitments();
@@ -227,7 +229,7 @@ template <typename settings> void Prover<settings>::execute_wire_commitments_rou
     // Add public inputs to transcript from the second wire polynomial
     const Polynomial& public_wires_source = wire_polynomials[1];
 
-    std::vector<Fr> public_wires;
+    std::vector<FF> public_wires;
     for (size_t i = 0; i < key->num_public_inputs; ++i) {
         public_wires.push_back(public_wires_source[i]);
     }
@@ -237,9 +239,10 @@ template <typename settings> void Prover<settings>::execute_wire_commitments_rou
 /**
  * For Standard Honk, this is a non-op (just like for Standard/Turbo Plonk).
  * */
-template <typename settings> void Prover<settings>::execute_tables_round()
+void ExampleProver::execute_tables_round()
 {
     // queue.flush_queue(); // NOTE: Don't remove; we may reinstate the queue
+    // WORKTODO: implement this round
     transcript.apply_fiat_shamir("eta");
 
     // No operations are needed here for Standard Honk
@@ -249,7 +252,7 @@ template <typename settings> void Prover<settings>::execute_tables_round()
  * - Do Fiat-Shamir to get "beta" challenge (Note: gamma = beta^2)
  * - Compute grand product polynomial (permutation only) and commitment
  * */
-template <typename settings> void Prover<settings>::execute_grand_product_computation_round()
+void ExampleProver::execute_grand_product_computation_round()
 {
     // queue.flush_queue(); // NOTE: Don't remove; we may reinstate the queue
 
@@ -271,15 +274,16 @@ template <typename settings> void Prover<settings>::execute_grand_product_comput
  * - Run Sumcheck resulting in u = (u_1,...,u_d) challenges and all
  *   evaluations at u being calculated.
  * */
-template <typename settings> void Prover<settings>::execute_relation_check_rounds()
+void ExampleProver::execute_relation_check_rounds()
 {
     // queue.flush_queue(); // NOTE: Don't remove; we may reinstate the queue
 
-    using Sumcheck = sumcheck::Sumcheck<Fr,
+    using Sumcheck = sumcheck::Sumcheck<FF,
                                         Transcript,
                                         sumcheck::ArithmeticRelation,
                                         sumcheck::GrandProductComputationRelation,
-                                        sumcheck::GrandProductInitializationRelation>;
+                                        sumcheck::GrandProductInitializationRelation
+                                        /* WORKTODO: add relations */>;
 
     transcript.apply_fiat_shamir("alpha");
 
@@ -293,13 +297,14 @@ template <typename settings> void Prover<settings>::execute_relation_check_round
  * - Compute d+1 Fold polynomials and their evaluations.
  *
  * */
-template <typename settings> void Prover<settings>::execute_univariatization_round()
+void ExampleProver::execute_univariatization_round()
 {
+    // WORKTODO: these must be updated
     const size_t NUM_POLYNOMIALS = bonk::StandardArithmetization::NUM_POLYNOMIALS;
     const size_t NUM_UNSHIFTED_POLYS = bonk::StandardArithmetization::NUM_UNSHIFTED_POLYNOMIALS;
 
     // Construct MLE opening point u = (u_0, ..., u_{d-1})
-    std::vector<Fr> opening_point; // u
+    std::vector<FF> opening_point; // u
     for (size_t round_idx = 0; round_idx < key->log_circuit_size; round_idx++) {
         std::string label = "u_" + std::to_string(round_idx);
         opening_point.emplace_back(transcript.get_challenge_field_element(label));
@@ -307,8 +312,8 @@ template <typename settings> void Prover<settings>::execute_univariatization_rou
 
     // Generate batching challenge ρ and powers 1,ρ,…,ρᵐ⁻¹
     transcript.apply_fiat_shamir("rho");
-    Fr rho = Fr::serialize_from_buffer(transcript.get_challenge("rho").begin());
-    std::vector<Fr> rhos = Gemini::powers_of_rho(rho, NUM_POLYNOMIALS);
+    FF rho = FF::serialize_from_buffer(transcript.get_challenge("rho").begin());
+    std::vector<FF> rhos = Gemini::powers_of_rho(rho, NUM_POLYNOMIALS);
 
     // Get vector of multivariate evaluations produced by Sumcheck
     auto multivariate_evaluations = transcript.get_field_element_vector("multivariate_evaluations");
@@ -333,7 +338,7 @@ template <typename settings> void Prover<settings>::execute_univariatization_rou
  * - Do Fiat-Shamir to get "r" challenge
  * - Compute evaluations of folded polynomials.
  * */
-template <typename settings> void Prover<settings>::execute_pcs_evaluation_round()
+void ExampleProver::execute_pcs_evaluation_round()
 {
     // TODO(luke): This functionality is performed within Gemini::reduce_prove(), called in the previous round. In the
     // future we could (1) split the Gemini functionality to match the round structure defined here, or (2) remove this
@@ -346,7 +351,7 @@ template <typename settings> void Prover<settings>::execute_pcs_evaluation_round
  * - Do Fiat-Shamir to get "z" challenge.
  * - Compute polynomial Q(X) - Q_z(X)
  * */
-template <typename settings> void Prover<settings>::execute_shplonk_round()
+void ExampleProver::execute_shplonk_round()
 {
     shplonk_output =
         Shplonk::reduce_prove(commitment_key, gemini_output.opening_pairs, gemini_output.witnesses, &transcript);
@@ -356,18 +361,18 @@ template <typename settings> void Prover<settings>::execute_shplonk_round()
  * - Compute KZG quotient commitment [W]_1.
  *
  * */
-template <typename settings> void Prover<settings>::execute_kzg_round()
+void ExampleProver::execute_kzg_round()
 {
     KZG::reduce_prove(commitment_key, shplonk_output.opening_pair, shplonk_output.witness, &transcript);
 }
 
-template <typename settings> plonk::proof& Prover<settings>::export_proof()
+plonk::proof& ExampleProver::export_proof()
 {
     proof.proof_data = transcript.export_transcript();
     return proof;
 }
 
-template <typename settings> plonk::proof& Prover<settings>::construct_proof()
+plonk::proof& ExampleProver::construct_proof()
 {
     // Add circuit size and public input size to transcript.
     execute_preamble_round();
@@ -418,7 +423,5 @@ template <typename settings> plonk::proof& Prover<settings>::construct_proof()
 
     return export_proof();
 }
-
-template class Prover<plonk::standard_settings>;
 
 } // namespace honk

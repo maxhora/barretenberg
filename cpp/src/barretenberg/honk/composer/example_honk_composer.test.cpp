@@ -1,9 +1,9 @@
-#include "standard_honk_composer.hpp"
+#include "example_honk_composer.hpp"
 #include "barretenberg/honk/sumcheck/relations/relation.hpp"
 #include "barretenberg/numeric/uint256/uint256.hpp"
 #include "barretenberg/proof_system/flavor/flavor.hpp"
 #include <cstdint>
-#include "barretenberg/honk/proof_system/prover.hpp"
+#include "barretenberg/honk/proof_system/example_prover.hpp"
 #include "barretenberg/honk/sumcheck/sumcheck_round.hpp"
 #include "barretenberg/honk/sumcheck/relations/grand_product_computation_relation.hpp"
 #include "barretenberg/honk/sumcheck/relations/grand_product_initialization_relation.hpp"
@@ -13,7 +13,21 @@
 
 using namespace honk;
 
-namespace test_standard_honk_composer {
+namespace test_example_honk_composer {
+
+TEST(ExampleHonkComposer, BaseCase)
+{
+    auto composer = ExampleHonkComposer();
+    fr a = 1;
+    composer.circuit_constructor.add_variable(a);
+
+    auto prover = composer.create_prover();
+    plonk::proof proof = prover.construct_proof();
+    auto verifier = composer.create_verifier();
+    bool verified = verifier.verify_proof(proof);
+    ASSERT_TRUE(verified);
+}
+
 /**
  * @brief The goal of this test is to check that the sigma permutation vectors for honk are generated correctly.
  *
@@ -22,9 +36,9 @@ namespace test_standard_honk_composer {
  * 2) That if the permutation argument is computed with witness values, the values from the identity permutation and
  * sigma permutation are equal
  */
-TEST(StandardHonkComposer, SigmaIDCorrectness)
+TEST(ExampleHonkComposer, SigmaIDCorrectness)
 {
-    auto test_permutation = [](StandardHonkComposer& composer) {
+    auto test_permutation = [](ExampleHonkComposer& composer) {
         auto proving_key = composer.compute_proving_key();
         const auto n = proving_key->circuit_size;
 
@@ -103,7 +117,7 @@ TEST(StandardHonkComposer, SigmaIDCorrectness)
         EXPECT_EQ(left, right);
     };
 
-    StandardHonkComposer composer = StandardHonkComposer();
+    ExampleHonkComposer composer = ExampleHonkComposer();
     fr a = fr::one();
     uint32_t a_idx = composer.add_variable(a);
     fr b = fr::one();
@@ -132,10 +146,10 @@ TEST(StandardHonkComposer, SigmaIDCorrectness)
  * @brief Check the correctness of lagrange polynomials generated during proving key computation
  *
  */
-TEST(StandardHonkComposer, LagrangeCorrectness)
+TEST(ExampleHonkComposer, LagrangeCorrectness)
 {
     // Create a composer and a dummy circuit with a few gates
-    StandardHonkComposer composer = StandardHonkComposer();
+    ExampleHonkComposer composer = ExampleHonkComposer();
     fr a = fr::one();
     uint32_t a_idx = composer.add_variable(a);
     fr b = fr::one();
@@ -180,7 +194,7 @@ TEST(StandardHonkComposer, LagrangeCorrectness)
  * merged.
  * In this test we create two almost identical circuits. They differ because one
  */
-TEST(StandardHonkComposer, AssertEquals)
+TEST(ExampleHonkComposer, AssertEquals)
 {
     /**
      * @brief A function that creates a simple circuit with repeated gates, leading to large permutation cycles
@@ -264,8 +278,8 @@ TEST(StandardHonkComposer, AssertEquals)
     };
 
     // Get 2 circuits
-    StandardHonkComposer composer_no_assert_equal = StandardHonkComposer();
-    StandardHonkComposer composer_with_assert_equal = StandardHonkComposer();
+    ExampleHonkComposer composer_no_assert_equal = ExampleHonkComposer();
+    ExampleHonkComposer composer_with_assert_equal = ExampleHonkComposer();
 
     // Construct circuits
     create_simple_circuit(composer_no_assert_equal);
@@ -280,10 +294,10 @@ TEST(StandardHonkComposer, AssertEquals)
     EXPECT_EQ(get_maximum_cycle(composer_with_assert_equal), get_maximum_cycle(composer_no_assert_equal) * 2);
 }
 
-TEST(StandardHonkComposer, VerificationKeyCreation)
+TEST(ExampleHonkComposer, VerificationKeyCreation)
 {
     // Create a composer and a dummy circuit with a few gates
-    StandardHonkComposer composer = StandardHonkComposer();
+    ExampleHonkComposer composer = ExampleHonkComposer();
     fr a = fr::one();
     uint32_t a_idx = composer.add_variable(a);
     fr b = fr::one();
@@ -308,14 +322,15 @@ TEST(StandardHonkComposer, VerificationKeyCreation)
  * @brief A test taking sumcheck relations and applying them to the witness and selector polynomials to ensure that the
  * realtions are correct.
  *
- * TODO(Kesha): We'll have to update this function once we add zk, since the relation will be incorrect for he first few
+ * TODO(Kesha): We'll have to update this function once we add zk, since the relation will be incorrect for he first
+ few
  * indices
  *
  */
-TEST(StandardHonkComposer, SumcheckRelationCorrectness)
+TEST(ExampleHonkComposer, SumcheckRelationCorrectness)
 {
     // Create a composer and a dummy circuit with a few gates
-    StandardHonkComposer composer = StandardHonkComposer();
+    ExampleHonkComposer composer = ExampleHonkComposer();
     fr a = fr::one();
     // Using the public variable to check that public_input_delta is computed and added to the relation correctly
     uint32_t a_idx = composer.add_public_variable(a);
@@ -408,23 +423,10 @@ TEST(StandardHonkComposer, SumcheckRelationCorrectness)
     }
 }
 
-TEST(StandardHonkComposer, BaseCase)
-{
-    auto composer = StandardHonkComposer();
-    fr a = 1;
-    composer.circuit_constructor.add_variable(a);
-
-    auto prover = composer.create_prover();
-    plonk::proof proof = prover.construct_proof();
-    auto verifier = composer.create_verifier();
-    bool verified = verifier.verify_proof(proof);
-    ASSERT_TRUE(verified);
-}
-
-TEST(StandardHonkComposer, TwoGates)
+TEST(ExampleHonkComposer, TwoGates)
 {
     auto run_test = [](bool expect_verified) {
-        auto composer = StandardHonkComposer();
+        auto composer = ExampleHonkComposer();
 
         // 1 + 1 - 2 = 0
         uint32_t w_l_1_idx;
@@ -454,4 +456,4 @@ TEST(StandardHonkComposer, TwoGates)
     run_test(/* expect_verified=*/true);
     run_test(/* expect_verified=*/false);
 }
-} // namespace test_standard_honk_composer
+} // namespace test_example_honk_composer

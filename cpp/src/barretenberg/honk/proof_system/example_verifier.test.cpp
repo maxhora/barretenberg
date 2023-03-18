@@ -2,10 +2,10 @@
 #include "barretenberg/plonk/proof_system/constants.hpp"
 #include "barretenberg/polynomials/polynomial.hpp"
 #include "barretenberg/proof_system/flavor/flavor.hpp"
-#include "prover.hpp"
+#include "example_prover.hpp"
 #include "barretenberg/proof_system/proving_key/proving_key.hpp"
 #include "barretenberg/transcript/transcript.hpp"
-#include "verifier.hpp"
+#include "example_verifier.hpp"
 #include "barretenberg/ecc/curves/bn254/scalar_multiplication/scalar_multiplication.hpp"
 #include <gtest/gtest.h>
 #include "barretenberg/srs/reference_string/file_reference_string.hpp"
@@ -26,7 +26,7 @@ template <class FF> class VerifierTests : public testing::Test {
         return honk::StandardHonk::create_manifest(num_public_inputs, num_sumcheck_rounds);
     }
 
-    static StandardVerifier generate_verifier(std::shared_ptr<bonk::proving_key> circuit_proving_key)
+    static ExampleVerifier generate_verifier(std::shared_ptr<bonk::proving_key> circuit_proving_key)
     {
         std::array<fr*, 8> poly_coefficients;
         poly_coefficients[0] = circuit_proving_key->polynomial_cache.get("q_1_lagrange").get_coefficients();
@@ -66,7 +66,7 @@ template <class FF> class VerifierTests : public testing::Test {
         circuit_verification_key->commitments.insert({ "SIGMA_2", commitments[6] });
         circuit_verification_key->commitments.insert({ "SIGMA_3", commitments[7] });
 
-        StandardVerifier verifier(circuit_verification_key, create_manifest(0, circuit_proving_key->log_circuit_size));
+        ExampleVerifier verifier(circuit_verification_key, create_manifest(0, circuit_proving_key->log_circuit_size));
 
         // std::unique_ptr<KateCommitmentScheme<standard_settings>> kate_commitment_scheme =
         //     std::make_unique<KateCommitmentScheme<standard_settings>>();
@@ -217,7 +217,7 @@ TYPED_TEST(VerifierTests, VerifyArithmeticProofSmall)
 
     StandardProver prover = TestFixture::generate_test_data(n);
 
-    StandardVerifier verifier = TestFixture::generate_verifier(prover.key);
+    ExampleVerifier verifier = TestFixture::generate_verifier(prover.key);
 
     // construct proof
     plonk::proof proof = prover.construct_proof();

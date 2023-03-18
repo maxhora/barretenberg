@@ -23,7 +23,7 @@
 
 namespace honk {
 
-using Fr = barretenberg::fr;
+using FF = barretenberg::fr;
 
 template <typename settings> class Prover {
 
@@ -44,7 +44,7 @@ template <typename settings> class Prover {
 
     void compute_wire_commitments();
 
-    barretenberg::polynomial compute_grand_product_polynomial(Fr beta, Fr gamma);
+    barretenberg::polynomial compute_grand_product_polynomial(FF beta, FF gamma);
 
     void construct_prover_polynomials();
 
@@ -62,7 +62,7 @@ template <typename settings> class Prover {
 
     // Container for spans of all polynomials required by the prover (i.e. all multivariates evaluated by Sumcheck).
     // TODO(Cody): This polynomial count should be supplied by flavor, not arithmetization.
-    std::array<std::span<Fr>, bonk::StandardArithmetization::POLYNOMIAL::COUNT> prover_polynomials;
+    std::array<std::span<FF>, bonk::StandardArithmetization::POLYNOMIAL::COUNT> prover_polynomials;
 
     // Honk only needs a small portion of the functionality but may be fine to use existing work_queue
     // NOTE: this is not currently in use, but it may well be used in the future.

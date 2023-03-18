@@ -18,6 +18,7 @@ template <size_t program_width_> class CircuitConstructorBase {
     std::vector<uint32_t> w_r;
     std::vector<uint32_t> w_o;
     std::vector<uint32_t> w_4;
+    std::vector<uint32_t> w_5;
     std::vector<uint32_t> public_inputs;
     std::vector<barretenberg::fr> variables;
     // index of next variable in equivalence class (=REAL_VARIABLE if you're last)

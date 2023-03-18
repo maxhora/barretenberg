@@ -151,14 +151,14 @@ template <typename program_settings> bool Verifier<program_settings>::verify_pro
     }
 
     // Compute powers of batching challenge rho
-    Fr rho = Fr::serialize_from_buffer(transcript.get_challenge("rho").begin());
-    std::vector<Fr> rhos = Gemini::powers_of_rho(rho, NUM_POLYNOMIALS);
+    FF rho = FF::serialize_from_buffer(transcript.get_challenge("rho").begin());
+    std::vector<FF> rhos = Gemini::powers_of_rho(rho, NUM_POLYNOMIALS);
 
     // Get vector of multivariate evaluations produced by Sumcheck
     auto multivariate_evaluations = transcript.get_field_element_vector("multivariate_evaluations");
 
     // Compute batched multivariate evaluation
-    Fr batched_evaluation = Fr::zero();
+    FF batched_evaluation = FF::zero();
     for (size_t i = 0; i < NUM_POLYNOMIALS; ++i) {
         batched_evaluation += multivariate_evaluations[i] * rhos[i];
     }

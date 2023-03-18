@@ -421,6 +421,19 @@ TEST(StandardHonkComposer, BaseCase)
     ASSERT_TRUE(verified);
 }
 
+// TEST(StandardHonkComposer, BaseCase2)
+// {
+//     auto circuit_constructor = StandardCircuitConstructor();
+//     fr a = 1;
+//     circuit_constructor.add_variable(a);
+
+//     auto prover = StandardHonkComposerHelper::create_prover(circuit_constructor);
+//     plonk::proof proof = prover.construct_proof();
+//     auto verifier = HonkComposerHelper::create_verifier(circuit_constructor);
+//     bool verified = verifier.verify_proof(proof);
+//     ASSERT_TRUE(verified);
+// }
+
 TEST(StandardHonkComposer, TwoGates)
 {
     auto run_test = [](bool expect_verified) {

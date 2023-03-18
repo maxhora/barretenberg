@@ -60,7 +60,7 @@ struct StandardArithmetization {
     };
 };
 
-struct StandardArithmetization {
+struct ExampleArithmetization {
     /**
      * @brief All of the multivariate polynomials used by the Standard Honk Prover.
      * @details The polynomials are broken into three categories: precomputed, witness, and shifted.
@@ -76,7 +76,11 @@ struct StandardArithmetization {
         Q_L,
         Q_R,
         Q_O,
+        Q_4,
+        Q_5,
         Q_M,
+        Q_LOOKUP_TYPE,
+        Q_SORT,
         SIGMA_1,
         SIGMA_2,
         SIGMA_3,
@@ -89,6 +93,8 @@ struct StandardArithmetization {
         W_L,
         W_R,
         W_O,
+        W_4,
+        W_5,
         Z_PERM,
         /* --- SHIFTED POLYNOMIALS --- */
         Z_PERM_SHIFT,
@@ -240,16 +246,11 @@ struct StandardHonk {
     }
 };
 
-struct StandardHonk {
+struct ExampleHonk {
   public:
-    using Arithmetization = bonk::StandardArithmetization;
+    using Arithmetization = bonk::ExampleArithmetization;
     using MULTIVARIATE = Arithmetization::POLYNOMIAL;
-    // // TODO(Cody): Where to specify? is this polynomial manifest size?
-    // static constexpr size_t STANDARD_HONK_MANIFEST_SIZE = 16;
-    // TODO(Cody): Maybe relation should be supplied and this should be computed as is done in sumcheck?
-    // Then honk::StandardHonk (or whatever we rename it) would become an alias for a Honk flavor with a
-    // certain set of parameters, including the relations?
-    static constexpr size_t MAX_RELATION_LENGTH = 5;
+    static constexpr size_t MAX_RELATION_LENGTH = 5; // WORKTODO: incorrect now.
 
     // TODO(Cody): should extract this from the parameter pack. Maybe that should be done here?
 
@@ -275,7 +276,7 @@ struct StandardHonk {
 
         // Round 1
         manifest_rounds.emplace_back(transcript::Manifest::RoundManifest(
-            { /* this is a noop */ },
+            { /* this is not a noop */ },
             /* challenge_name = */ "eta",
             /* num_challenges_in = */ 0));
 
@@ -286,6 +287,8 @@ struct StandardHonk {
               { .name = "W_1",           .num_bytes = g1_size,           .derived_by_verifier = false },
               { .name = "W_2",           .num_bytes = g1_size,           .derived_by_verifier = false },
               { .name = "W_3",           .num_bytes = g1_size,           .derived_by_verifier = false },
+              { .name = "W_4",           .num_bytes = g1_size,           .derived_by_verifier = false },
+              { .name = "W_5",           .num_bytes = g1_size,           .derived_by_verifier = false },
             },
             /* challenge_name = */ "beta",
             /* num_challenges_in = */ 2) // also produce "gamma"
@@ -304,7 +307,7 @@ struct StandardHonk {
             manifest_rounds.emplace_back(
                 transcript::Manifest::RoundManifest(
             {
-              { .name = "univariate_" + label, .num_bytes = fr_size * honk::StandardHonk::MAX_RELATION_LENGTH, .derived_by_verifier = false }
+              { .name = "univariate_" + label, .num_bytes = fr_size * honk::ExampleHonk::MAX_RELATION_LENGTH, .derived_by_verifier = false }
             },
             /* challenge_name = */ "u_" + label,
             /* num_challenges_in = */ 1));
@@ -313,7 +316,7 @@ struct StandardHonk {
         // Round 5 + num_sumcheck_rounds
         manifest_rounds.emplace_back(transcript::Manifest::RoundManifest(
             {
-              { .name = "multivariate_evaluations",     .num_bytes = fr_size * bonk::StandardArithmetization::NUM_POLYNOMIALS, .derived_by_verifier = false, .challenge_map_index = 0 },
+              { .name = "multivariate_evaluations",     .num_bytes = fr_size * bonk::ExampleArithmetization::NUM_POLYNOMIALS, .derived_by_verifier = false, .challenge_map_index = 0 },
             },
             /* challenge_name = */ "rho",
             /* num_challenges_in = */ 1)); /* TODO(Cody): magic number! Where should this be specified? */

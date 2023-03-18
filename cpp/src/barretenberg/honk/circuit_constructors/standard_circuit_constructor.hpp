@@ -4,15 +4,16 @@
 #include "barretenberg/proof_system/flavor/flavor.hpp"
 
 namespace bonk {
-enum StandardSelectors { QM, Q1, Q2, Q3, QC, NUM };
-inline std::vector<std::string> standard_selector_names()
-{
-    std::vector<std::string> result{ "q_m", "q_1", "q_2", "q_3", "q_c" };
-    return result;
-}
 
 class StandardCircuitConstructor : public CircuitConstructorBase<STANDARD_HONK_WIDTH> {
   public:
+    // NOTE: Having this outside of a class lead to name clashes when adding another circuit constructor.
+    enum StandardSelectors { QM, Q1, Q2, Q3, QC, NUM };
+    static inline std::vector<std::string> standard_selector_names()
+    {
+        std::vector<std::string> result{ "q_m", "q_1", "q_2", "q_3", "q_c" };
+        return result;
+    }
     // TODO(#216)(Kesha): replace this with Honk enums after we have a verifier and no longer depend on plonk
     // prover/verifier
     static constexpr plonk::ComposerType type = plonk::ComposerType::STANDARD_HONK;
@@ -24,7 +25,7 @@ class StandardCircuitConstructor : public CircuitConstructorBase<STANDARD_HONK_W
     std::map<barretenberg::fr, uint32_t> constant_variable_indices;
 
     StandardCircuitConstructor(const size_t size_hint = 0)
-        : CircuitConstructorBase(standard_selector_names(), StandardSelectors::NUM, size_hint)
+        : CircuitConstructorBase(standard_selector_names(), static_cast<size_t>(StandardSelectors::NUM), size_hint)
     {
         w_l.reserve(size_hint);
         w_r.reserve(size_hint);

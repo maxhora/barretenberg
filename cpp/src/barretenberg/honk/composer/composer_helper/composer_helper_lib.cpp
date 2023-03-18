@@ -7,6 +7,7 @@
 #include "composer_helper_lib.hpp"
 #include "barretenberg/honk/pcs/commitment_key.hpp"
 #include "barretenberg/honk/circuit_constructors/standard_circuit_constructor.hpp"
+#include "barretenberg/honk/circuit_constructors/example_circuit_constructor.hpp"
 namespace bonk {
 
 /**
@@ -134,12 +135,12 @@ std::vector<barretenberg::polynomial> compute_witness_base(const CircuitConstruc
     // construct a view over all the wire's variable indices
     // w[j][i] is the index of the variable in the j-th wire, at gate i
     // Each array should be of size `num_gates`
-    std::array<std::span<const uint32_t>, program_width> w;
-    w[0] = circuit_constructor.w_l;
-    w[1] = circuit_constructor.w_r;
-    w[2] = circuit_constructor.w_o;
+    std::array<std::span<const uint32_t>, program_width> wire;
+    wire[0] = circuit_constructor.w_l;
+    wire[1] = circuit_constructor.w_r;
+    wire[2] = circuit_constructor.w_o;
     if constexpr (program_width > 3) {
-        w[3] = circuit_constructor.w_4;
+        wire[3] = circuit_constructor.w_4;
     }
     std::vector<barretenberg::polynomial> wires;
     // Note: randomness is added to 3 of the last 4 positions in plonk/proof_system/prover/prover.cpp
@@ -160,7 +161,7 @@ std::vector<barretenberg::polynomial> compute_witness_base(const CircuitConstruc
         // Assign the variable values (which are pointed-to by the `w_` wires) to the wire witness polynomials
         // `poly_w_`, shifted to make room for the public inputs at the beginning.
         for (size_t i = 0; i < num_gates; ++i) {
-            w_lagrange[num_public_inputs + i] = circuit_constructor.get_variable(w[j][i]);
+            w_lagrange[num_public_inputs + i] = circuit_constructor.get_variable(wire[j][i]);
         }
         wires.push_back(std::move(w_lagrange));
     }
@@ -211,4 +212,10 @@ template void construct_lagrange_selector_forms<StandardCircuitConstructor>(cons
 template std::vector<barretenberg::polynomial> compute_witness_base<StandardCircuitConstructor>(
     const StandardCircuitConstructor&, const size_t, const size_t);
 
+template std::shared_ptr<bonk::proving_key> initialize_proving_key<ExampleCircuitConstructor>(
+    const ExampleCircuitConstructor&, bonk::ReferenceStringFactory*, const size_t, const size_t, plonk::ComposerType);
+template void construct_lagrange_selector_forms<ExampleCircuitConstructor>(const ExampleCircuitConstructor&,
+                                                                           bonk::proving_key*);
+template std::vector<barretenberg::polynomial> compute_witness_base<ExampleCircuitConstructor>(
+    const ExampleCircuitConstructor&, const size_t, const size_t);
 } // namespace bonk

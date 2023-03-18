@@ -13,27 +13,26 @@
 #include "barretenberg/honk/pcs/kzg/kzg.hpp"
 
 namespace honk {
-template <typename program_settings> class Verifier {
+class ExampleVerifier {
 
   public:
-    Verifier(std::shared_ptr<bonk::verification_key> verifier_key = nullptr,
-             const transcript::Manifest& manifest = honk::StandardHonk::create_manifest(0));
-    Verifier(Verifier&& other);
-    Verifier(const Verifier& other) = delete;
-    Verifier& operator=(const Verifier& other) = delete;
-    Verifier& operator=(Verifier&& other);
+    // WORKTODO: add a new manifest; template by flavor to share that manifest.
+    // WORKTODO: write new manifest.
+    ExampleVerifier(std::shared_ptr<bonk::verification_key> verifier_key = nullptr,
+                    const transcript::Manifest& manifest = honk::StandardHonk::create_manifest(0));
+    ExampleVerifier(ExampleVerifier&& other);
+    ExampleVerifier(const ExampleVerifier& other) = delete;
+    ExampleVerifier& operator=(const ExampleVerifier& other) = delete;
+    ExampleVerifier& operator=(ExampleVerifier&& other);
 
     bool verify_proof(const plonk::proof& proof);
     transcript::Manifest manifest;
 
+    static constexpr size_t num_wires = 5;
     std::shared_ptr<bonk::verification_key> key;
     std::map<std::string, barretenberg::g1::affine_element> kate_g1_elements;
     std::map<std::string, barretenberg::fr> kate_fr_elements;
     std::shared_ptr<pcs::kzg::VerificationKey> kate_verification_key;
 };
-
-extern template class Verifier<honk::standard_verifier_settings>;
-
-typedef Verifier<honk::standard_verifier_settings> StandardVerifier;
 
 } // namespace honk

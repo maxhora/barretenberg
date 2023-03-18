@@ -8,6 +8,7 @@ enum ComposerType {
     TURBO,
     PLOOKUP,
     STANDARD_HONK, // Todo(Arijit): We should replace STANDARD_HONK outside plonk or the namespace should be bonk
+    EXAMPLE_HONK,  // TODO(Cody): Ugh.
 };
 
 // This variable sets the composer (TURBO or ULTRA) of the entire stdlib and rollup modules.
