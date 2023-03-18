@@ -39,7 +39,7 @@ using Flavor          == proving system is at least somewhat generic
   - specify width; relations
   - all polynomials used in the protocol
 
-Variable program width stuff only to be implemented by Plonk.
+Variable program width stuff only to be implemented by Honk.
 
 `initialize_proving_key` takes in ComposerType... is only used in plonk to easily select the manifest.
 
@@ -142,6 +142,54 @@ Depending on what you copy and paste, you need to subset some tests and add othe
 
 For some classes we only want to instantiate if plookup module is in use, so can't just check if compsoer type is plookup anymore. Similar with branching
 
-# WORKTODOs
+Need to move plookup stuff and stdlib stuff out of `plonk`.
 
-Implement all plookup and 
+# WORKTODOs
+ - Implement all plookup and genperm functionality
+ - Implement check_circuit
+ - Add circuit constructor new functionality will need testing.
+ - Update `compute_proving_key` function with new functionality
+ - Move plookup stuff into library functions (actually work for Kesha?)
+ - Update commitments in `compute_verification_key_base`
+ - Implement `execute_tables_round`
+
+
+# Pre-work
+ - Group by flavor for easy copy and pasting
+ - Avoid explicit instantiation woes?
+ - Avoid duplicating tests; group into functionality suites?
+ - Rename `composer` in test quites ugh.
+ - ComposerType cleanup
+ - Establish prover shared lib
+ - Modularize `check_circuit` construction
+ - Make "uses_plookup" an aspect of the flavor
+ - Find alternative to `enum FooSelectors` and `foo_selector_names`
+ - Add tests of new 
+ - Improve storage of polynomial information, in particular
+   - Find better way to commit to pre-processed polynomials 
+   - Ditto for population of `prover_polynomials`
+   - NUM_POLYNOMIALS etc
+ - Move `compute_grand_product_polynomial` into library function?
+ - Add the needed relations: genperm relations; plookup relations; new relation using w_5
+ - Move constants 
+ - Thing about how to specify relations; sumcheck type goes in Flavor?
+ - Move flavors into Flavor namespace
+ - Think about how to group interfaces for basic functionality: gates and selectors that are needed in order to implement plookup; rom / ram; others surely.
+ - 
+
+
+ # Summary notes:
+Arithmetization is generic data to CircuitConstructor:
+ - num_wires
+ - uses_plookup or maybe a template parameter giving a particular plookup implementation
+ - 
+ It can be shared (StandardHonk is an important example; UltraHonk is using our state of the art from PlonK, will be orthogonal to Goblin developments at least for a while.)
+
+Flavor
+ - All polynomials used in the protocol
+ - Curve (alias this prob)
+ - Commitment scheme
+ - ZK?
+ - Generic template parameter to: Composer Helper, Prover, Verifier
+
+It seems like more stuff should just be implemented in base class rather than having full virtual base class. Eg lots of constructors
