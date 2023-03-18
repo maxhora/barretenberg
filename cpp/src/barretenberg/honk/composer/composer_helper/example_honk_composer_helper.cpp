@@ -87,7 +87,7 @@ void ExampleHonkComposerHelper::compute_witness(const auto& circuit_constructor,
         return;
     }
     wire_polynomials = compute_witness_base(circuit_constructor, minimum_circuit_size, NUM_RANDOMIZED_GATES);
-    // WORKTODO: create the sorten concatenation polynomials called s_i. Implement as lib function
+    // WORKTODO: create the sorted concatenation polynomials called s_i. Implement as lib function
 
     computed_witness = true;
 }

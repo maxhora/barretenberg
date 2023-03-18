@@ -19,7 +19,7 @@ class ExampleVerifier {
     // WORKTODO: add a new manifest; template by flavor to share that manifest.
     // WORKTODO: write new manifest.
     ExampleVerifier(std::shared_ptr<bonk::verification_key> verifier_key = nullptr,
-                    const transcript::Manifest& manifest = honk::StandardHonk::create_manifest(0));
+                    const transcript::Manifest& manifest = honk::ExampleHonk::create_manifest(0));
     ExampleVerifier(ExampleVerifier&& other);
     ExampleVerifier(const ExampleVerifier& other) = delete;
     ExampleVerifier& operator=(const ExampleVerifier& other) = delete;

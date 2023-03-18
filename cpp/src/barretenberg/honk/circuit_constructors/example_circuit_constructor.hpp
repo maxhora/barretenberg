@@ -12,7 +12,6 @@ namespace bonk {
 class ExampleCircuitConstructor : public CircuitConstructorBase<5> {
   public:
     // WORKTODO: How/why are these coupled and what external relationships exist?
-    // WORKTODO: check this
     enum ExampleSelectors { QM, Q1, Q2, Q3, Q4, QC, QLOOKUPTYPE, QSORT, NUM };
     static inline std::vector<std::string> example_selector_names()
     {

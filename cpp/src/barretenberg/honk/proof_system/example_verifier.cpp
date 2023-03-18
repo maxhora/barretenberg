@@ -128,7 +128,6 @@ bool ExampleVerifier::verify_proof(const plonk::proof& proof)
     // // TODO(Cody): Compute some basic public polys like id(X), pow(X), and any required Lagrange polys
 
     // Execute Sumcheck Verifier
-    // WORKTODO: add relations
     auto sumcheck =
         Sumcheck<FF, Transcript, ArithmeticRelation, GrandProductComputationRelation, GrandProductInitializationRelation
                  /* WORKTODO: add more relations. Order must match; alias sumcheck class? */>(transcript);

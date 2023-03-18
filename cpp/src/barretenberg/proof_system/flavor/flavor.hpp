@@ -367,5 +367,4 @@ struct ExampleHonk {
         return output;
     }
 };
-// WORKTODO: add a new manifest
 } // namespace honk
