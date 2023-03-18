@@ -1,5 +1,6 @@
 #include "./plookup.hpp"
 #include "barretenberg/plonk/composer/ultra_composer.hpp"
+#include "barretenberg/honk/composer/example_honk_composer.hpp"
 #include "barretenberg/plonk/composer/plookup_tables/plookup_tables.hpp"
 #include "barretenberg/plonk/composer/plookup_tables/types.hpp"
 
@@ -90,5 +91,6 @@ field_t<Composer> plookup_<Composer>::read_from_1_to_2_table(const MultiTableId 
 }
 
 template class plookup_<plonk::UltraComposer>;
+template class plookup_<honk::ExampleHonkComposer>;
 } // namespace stdlib
 } // namespace plonk

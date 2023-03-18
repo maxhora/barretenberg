@@ -1,4 +1,5 @@
 #include "../../composers/composers.hpp"
+#include "barretenberg/honk/composer/example_honk_composer.hpp"
 #include "uint.hpp"
 
 using namespace barretenberg;
@@ -257,5 +258,10 @@ template class uint_plookup<plonk::UltraComposer, uint8_t>;
 template class uint_plookup<plonk::UltraComposer, uint16_t>;
 template class uint_plookup<plonk::UltraComposer, uint32_t>;
 template class uint_plookup<plonk::UltraComposer, uint64_t>;
+
+template class uint_plookup<honk::ExampleHonkComposer, uint8_t>;
+template class uint_plookup<honk::ExampleHonkComposer, uint16_t>;
+template class uint_plookup<honk::ExampleHonkComposer, uint32_t>;
+template class uint_plookup<honk::ExampleHonkComposer, uint64_t>;
 } // namespace stdlib
 } // namespace plonk

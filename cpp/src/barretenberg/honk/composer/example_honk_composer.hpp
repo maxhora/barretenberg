@@ -17,6 +17,10 @@ class ExampleHonkComposer {
     static constexpr plonk::ComposerType type = plonk::ComposerType::EXAMPLE_HONK;
 
     static constexpr size_t UINT_LOG2_BASE = 2;
+    static constexpr size_t DEFAULT_PLOOKUP_RANGE_BITNUM = 14;
+    static constexpr size_t DEFAULT_PLOOKUP_RANGE_STEP_SIZE = 3;
+    static constexpr size_t DEFAULT_PLOOKUP_RANGE_SIZE = (1 << DEFAULT_PLOOKUP_RANGE_BITNUM) - 1;
+
     // An instantiation of the circuit constructor that only depends on arithmetization, not  on the proof system
     ExampleCircuitConstructor circuit_constructor;
     // Composer helper contains all proof-related material that is separate from circuit creation such as:
@@ -112,6 +116,34 @@ class ExampleHonkComposer {
     {
         circuit_constructor.create_range_constraint(variable_index, num_bits, msg);
     }
+
+    void create_new_range_constraint(const uint32_t variable_index, const size_t num_bits)
+    {
+        circuit_constructor.create_new_range_constraint(variable_index, num_bits);
+    }
+
+    std::vector<uint32_t> decompose_into_default_range(
+        const uint32_t variable_index,
+        const uint64_t num_bits,
+        const uint64_t target_range_bitnum = DEFAULT_PLOOKUP_RANGE_BITNUM,
+        std::string const& msg = "decompose_into_default_range")
+    {
+        return circuit_constructor.decompose_into_default_range(variable_index, num_bits, target_range_bitnum, msg);
+    };
+
+    plookup::ReadData<uint32_t> create_gates_from_plookup_accumulators(
+        const plookup::MultiTableId& id,
+        const plookup::ReadData<barretenberg::fr>& read_values,
+        const uint32_t key_a_index,
+        std::optional<uint32_t> key_b_index = std::nullopt)
+    {
+        // WORKTODO
+        static_cast<void>(id);
+        static_cast<void>(read_values);
+        static_cast<void>(key_a_index);
+        static_cast<void>(key_b_index);
+        return plookup::ReadData<uint32_t>();
+    };
 
     uint32_t add_variable(const barretenberg::fr& in) { return circuit_constructor.add_variable(in); }
 

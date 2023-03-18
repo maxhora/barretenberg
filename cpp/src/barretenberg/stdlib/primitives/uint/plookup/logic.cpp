@@ -1,4 +1,5 @@
 #include "../../composers/composers.hpp"
+#include "barretenberg/honk/composer/example_honk_composer.hpp"
 #include "uint.hpp"
 
 using namespace barretenberg;
@@ -277,10 +278,10 @@ uint_plookup<Composer, Native> uint_plookup<Composer, Native>::logic_operator(co
 
     ReadData<field_t<Composer>> lookup;
     if (op_type == XOR) {
-        lookup = plookup_read::get_lookup_accumulators(
+        lookup = plookup_<Composer>::get_lookup_accumulators(
             MultiTableId::UINT32_XOR, field_t<Composer>(*this), field_t<Composer>(other), true);
     } else {
-        lookup = plookup_read::get_lookup_accumulators(
+        lookup = plookup_<Composer>::get_lookup_accumulators(
             MultiTableId::UINT32_AND, field_t<Composer>(*this), field_t<Composer>(other), true);
     }
     uint_plookup<Composer, Native> result(ctx);
@@ -330,5 +331,9 @@ template class uint_plookup<plonk::UltraComposer, uint16_t>;
 template class uint_plookup<plonk::UltraComposer, uint32_t>;
 template class uint_plookup<plonk::UltraComposer, uint64_t>;
 
+template class uint_plookup<honk::ExampleHonkComposer, uint8_t>;
+template class uint_plookup<honk::ExampleHonkComposer, uint16_t>;
+template class uint_plookup<honk::ExampleHonkComposer, uint32_t>;
+template class uint_plookup<honk::ExampleHonkComposer, uint64_t>;
 } // namespace stdlib
 } // namespace plonk

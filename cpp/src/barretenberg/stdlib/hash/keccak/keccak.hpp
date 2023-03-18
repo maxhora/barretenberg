@@ -29,6 +29,7 @@ template <typename Composer> class keccak {
     using witness_ct = stdlib::witness_t<Composer>;
     using field_ct = stdlib::field_t<Composer>;
     using byte_array_ct = stdlib::byte_array<Composer>;
+    using plookup_read = plookup_<Composer>;
 
     // base of extended representation we use for efficient logic operations
     static constexpr uint256_t BASE = 11;

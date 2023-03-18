@@ -1,5 +1,6 @@
 #include "uint.hpp"
 #include "barretenberg/honk/composer/standard_honk_composer.hpp"
+#include "barretenberg/honk/composer/example_honk_composer.hpp"
 #include <functional>
 #include <gtest/gtest.h>
 #include "barretenberg/numeric/random/engine.hpp"
@@ -76,7 +77,8 @@ uint_native rotate(uint_native value, size_t rotation)
                     : value;
 }
 template <typename Composer> class stdlib_uint : public testing::Test {
-    typedef typename std::conditional<Composer::type == ComposerType::PLOOKUP,
+    typedef typename std::conditional<(Composer::type == ComposerType::PLOOKUP) ||
+                                          (Composer::type == ComposerType::EXAMPLE_HONK),
                                       stdlib::uint_plookup<Composer, uint_native>,
                                       stdlib::uint<Composer, uint_native>>::type uint_ct;
     typedef stdlib::bool_t<Composer> bool_ct;
@@ -1929,7 +1931,11 @@ template <typename Composer> class stdlib_uint : public testing::Test {
     }
 };
 
-typedef testing::Types<plonk::UltraComposer, plonk::TurboComposer, plonk::StandardComposer, honk::StandardHonkComposer>
+typedef testing::Types<plonk::UltraComposer,
+                       plonk::TurboComposer,
+                       plonk::StandardComposer,
+                       honk::StandardHonkComposer,
+                       honk::ExampleHonkComposer>
     ComposerTypes;
 
 TYPED_TEST_SUITE(stdlib_uint, ComposerTypes);

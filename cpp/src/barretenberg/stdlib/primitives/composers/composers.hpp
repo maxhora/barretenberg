@@ -1,6 +1,7 @@
 #pragma once
 #include "barretenberg/honk/composer/standard_plonk_composer.hpp"
 #include "barretenberg/honk/composer/standard_honk_composer.hpp"
+#include "barretenberg/honk/composer/example_honk_composer.hpp"
 #include "barretenberg/plonk/composer/standard_composer.hpp"
 #include "barretenberg/plonk/composer/turbo_composer.hpp"
 #include "barretenberg/plonk/composer/ultra_composer.hpp"
@@ -8,6 +9,7 @@
 #define INSTANTIATE_STDLIB_TYPE(stdlib_type)                                                                           \
     template class stdlib_type<plonk::StandardPlonkComposer>;                                                          \
     template class stdlib_type<honk::StandardHonkComposer>;                                                            \
+    template class stdlib_type<honk::ExampleHonkComposer>;                                                             \
     template class stdlib_type<plonk::StandardComposer>;                                                               \
     template class stdlib_type<plonk::TurboComposer>;                                                                  \
     template class stdlib_type<plonk::UltraComposer>;
@@ -32,4 +34,5 @@
 #define INSTANTIATE_STDLIB_ULTRA_TYPE(stdlib_type) template class stdlib_type<plonk::UltraComposer>;
 
 #define INSTANTIATE_STDLIB_ULTRA_TYPE_VA(stdlib_type, ...)                                                             \
-    template class stdlib_type<plonk::UltraComposer, __VA_ARGS__>;
+    template class stdlib_type<plonk::UltraComposer, __VA_ARGS__>;                                                     \
+    template class stdlib_type<honk::ExampleHonkComposer, __VA_ARGS__>;

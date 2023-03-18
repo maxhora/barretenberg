@@ -75,6 +75,8 @@ template <typename Composer> void blake2s_increment_counter(blake2s_state<Compos
 template <typename Composer> void blake2s_compress(blake2s_state<Composer>& S, byte_array<Composer> const& in)
 {
     typedef field_t<Composer> field_pt;
+    using plookup_read = plookup_<Composer>;
+
     field_pt m[16];
     field_pt v[16];
 

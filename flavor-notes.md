@@ -139,3 +139,9 @@ Need to explicitly instantiate CircuitConstructorBase for new widths. Slightly a
 Need to implement check_circuit. Will want to share components.
 
 Depending on what you copy and paste, you need to subset some tests and add other tests.
+
+For some classes we only want to instantiate if plookup module is in use, so can't just check if compsoer type is plookup anymore. Similar with branching
+
+# WORKTODOs
+
+Implement all plookup and 

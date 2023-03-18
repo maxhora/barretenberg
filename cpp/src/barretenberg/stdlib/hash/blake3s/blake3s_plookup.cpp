@@ -103,6 +103,8 @@ void blake3_compress_in_place(field_t<Composer> cv[8],
                               uint8_t flags)
 {
     typedef field_t<Composer> field_pt;
+    using plookup_read = plookup_<Composer>;
+
     field_pt state[BLAKE3_STATE_SIZE];
     compress_pre<Composer>(state, cv, block, block_len, flags);
 
@@ -127,6 +129,8 @@ void blake3_compress_xof(const field_t<Composer> cv[8],
                          byte_array<Composer>& out)
 {
     typedef field_t<Composer> field_pt;
+    using plookup_read = plookup_<Composer>;
+
     field_pt state[BLAKE3_STATE_SIZE];
 
     compress_pre<Composer>(state, cv, block, block_len, flags);

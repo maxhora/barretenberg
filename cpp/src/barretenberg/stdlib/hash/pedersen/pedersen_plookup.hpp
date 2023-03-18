@@ -13,6 +13,7 @@ template <typename ComposerContext> class pedersen_plookup {
     typedef plonk::stdlib::point<ComposerContext> point;
     typedef plonk::stdlib::packed_byte_array<ComposerContext> packed_byte_array;
     typedef plonk::stdlib::bool_t<ComposerContext> bool_t;
+    using plookup_read = plonk::stdlib::plookup_<ComposerContext>;
 
     enum AddType {
         LAMBDA,

@@ -13,6 +13,7 @@ typedef stdlib::byte_array<Composer> byte_array;
 typedef stdlib::public_witness_t<Composer> public_witness_t;
 typedef stdlib::field_t<Composer> field_ct;
 typedef stdlib::witness_t<Composer> witness_ct;
+using plookup_read = plonk::stdlib::plookup_<Composer>;
 
 namespace {
 auto& engine = numeric::random::get_debug_engine();
@@ -37,7 +38,7 @@ TEST(stdlib_keccak, keccak_format_input_table)
     for (size_t i = 0; i < 25; ++i) {
         uint64_t limb_native = engine.get_random_uint64();
         field_ct limb(witness_ct(&composer, limb_native));
-        stdlib::plookup_read::read_from_1_to_2_table(plookup::KECCAK_FORMAT_INPUT, limb);
+        plookup_read::read_from_1_to_2_table(plookup::KECCAK_FORMAT_INPUT, limb);
     }
     auto prover = composer.create_prover();
     auto verifier = composer.create_verifier();
@@ -56,7 +57,7 @@ TEST(stdlib_keccak, keccak_format_output_table)
         uint64_t limb_native = engine.get_random_uint64();
         uint256_t extended_native = stdlib::keccak<Composer>::convert_to_sparse(limb_native);
         field_ct limb(witness_ct(&composer, extended_native));
-        stdlib::plookup_read::read_from_1_to_2_table(plookup::KECCAK_FORMAT_OUTPUT, limb);
+        plookup_read::read_from_1_to_2_table(plookup::KECCAK_FORMAT_OUTPUT, limb);
     }
     auto prover = composer.create_prover();
     auto verifier = composer.create_verifier();
@@ -77,7 +78,7 @@ TEST(stdlib_keccak, keccak_theta_output_table)
             extended_native += base_value;
         }
         field_ct limb(witness_ct(&composer, extended_native));
-        stdlib::plookup_read::read_from_1_to_2_table(plookup::KECCAK_THETA_OUTPUT, limb);
+        plookup_read::read_from_1_to_2_table(plookup::KECCAK_THETA_OUTPUT, limb);
     }
     auto prover = composer.create_prover();
     auto verifier = composer.create_verifier();
@@ -150,7 +151,7 @@ TEST(stdlib_keccak, keccak_chi_output_table)
             binary_native += chi_normalization_table[base_value];
         }
         field_ct limb(witness_ct(&composer, extended_native));
-        const auto accumulators = stdlib::plookup_read::get_lookup_accumulators(plookup::KECCAK_CHI_OUTPUT, limb);
+        const auto accumulators = plookup_read::get_lookup_accumulators(plookup::KECCAK_CHI_OUTPUT, limb);
 
         field_ct normalized = accumulators[plookup::ColumnIdx::C2][0];
         field_ct msb = accumulators[plookup::ColumnIdx::C3][accumulators[plookup::ColumnIdx::C3].size() - 1];

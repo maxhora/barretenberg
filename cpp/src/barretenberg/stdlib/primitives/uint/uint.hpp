@@ -8,6 +8,7 @@
 #include "./plookup/uint.hpp"
 
 #include "barretenberg/honk/composer/standard_honk_composer.hpp"
+#include "barretenberg/honk/composer/example_honk_composer.hpp"
 #include "barretenberg/plonk/composer/standard_composer.hpp"
 #include "barretenberg/plonk/composer/turbo_composer.hpp"
 #include "barretenberg/plonk/composer/ultra_composer.hpp"
@@ -194,19 +195,23 @@ template <typename T, typename w> inline std::ostream& operator<<(std::ostream& 
 }
 
 template <typename ComposerContext>
-using uint8 = typename std::conditional<ComposerContext::type == ComposerType::PLOOKUP,
+using uint8 = typename std::conditional<(ComposerContext::type == ComposerType::PLOOKUP) ||
+                                            (ComposerContext::type == ComposerType::EXAMPLE_HONK),
                                         uint_plookup<ComposerContext, uint8_t>,
                                         uint<ComposerContext, uint8_t>>::type;
 template <typename ComposerContext>
-using uint16 = typename std::conditional<ComposerContext::type == ComposerType::PLOOKUP,
+using uint16 = typename std::conditional<(ComposerContext::type == ComposerType::PLOOKUP) ||
+                                             (ComposerContext::type == ComposerType::EXAMPLE_HONK),
                                          uint_plookup<ComposerContext, uint16_t>,
                                          uint<ComposerContext, uint16_t>>::type;
 template <typename ComposerContext>
-using uint32 = typename std::conditional<ComposerContext::type == ComposerType::PLOOKUP,
+using uint32 = typename std::conditional<(ComposerContext::type == ComposerType::PLOOKUP) ||
+                                             (ComposerContext::type == ComposerType::EXAMPLE_HONK),
                                          uint_plookup<ComposerContext, uint32_t>,
                                          uint<ComposerContext, uint32_t>>::type;
 template <typename ComposerContext>
-using uint64 = typename std::conditional<ComposerContext::type == ComposerType::PLOOKUP,
+using uint64 = typename std::conditional<(ComposerContext::type == ComposerType::PLOOKUP) ||
+                                             (ComposerContext::type == ComposerType::EXAMPLE_HONK),
                                          uint_plookup<ComposerContext, uint64_t>,
                                          uint<ComposerContext, uint64_t>>::type;
 

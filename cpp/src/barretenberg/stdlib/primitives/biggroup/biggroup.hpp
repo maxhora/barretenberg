@@ -413,7 +413,7 @@ template <class Composer, class Fq, class Fr, class NativeGroup> class element {
         quad_lookup_table endo_table;
         uint256_t beta_val = barretenberg::field<typename Fq::TParams>::cube_root_of_unity();
         Fq beta(barretenberg::fr(beta_val.slice(0, 136)), barretenberg::fr(beta_val.slice(136, 256)), false);
-        if constexpr (Composer::type == ComposerType::PLOOKUP) {
+        if constexpr ((Composer::type == ComposerType::PLOOKUP) || (Composer::type == ComposerType::EXAMPLE_HONK)) {
             for (size_t i = 0; i < 8; ++i) {
                 endo_table.element_table[i + 8].x = base_table[7 - i].x * beta;
                 endo_table.element_table[i + 8].y = base_table[7 - i].y;
@@ -446,7 +446,7 @@ template <class Composer, class Fq, class Fr, class NativeGroup> class element {
         lookup_table_plookup<5> endo_table;
         uint256_t beta_val = barretenberg::field<typename Fq::TParams>::cube_root_of_unity();
         Fq beta(barretenberg::fr(beta_val.slice(0, 136)), barretenberg::fr(beta_val.slice(136, 256)), false);
-        if constexpr (Composer::type == ComposerType::PLOOKUP) {
+        if constexpr ((Composer::type == ComposerType::PLOOKUP) || (Composer::type == ComposerType::EXAMPLE_HONK)) {
             for (size_t i = 0; i < 16; ++i) {
                 endo_table.element_table[i + 16].x = base_table[15 - i].x * beta;
                 endo_table.element_table[i + 16].y = base_table[15 - i].y;

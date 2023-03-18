@@ -3,6 +3,7 @@
 #include "../composers/composers_fwd.hpp"
 #include "../witness/witness.hpp"
 #include "barretenberg/honk/composer/standard_honk_composer.hpp"
+#include "barretenberg/honk/composer/example_honk_composer.hpp"
 #include "barretenberg/honk/composer/standard_plonk_composer.hpp"
 #include "barretenberg/common/assert.hpp"
 

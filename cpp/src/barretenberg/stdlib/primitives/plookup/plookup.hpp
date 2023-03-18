@@ -1,9 +1,12 @@
 #pragma once
 #include <array>
 #include <vector>
+#include "barretenberg/honk/composer/standard_honk_composer.hpp"
+#include "barretenberg/honk/composer/example_honk_composer.hpp"
 #include "barretenberg/plonk/composer/plookup_tables/plookup_tables.hpp"
 #include "barretenberg/plonk/composer/ultra_composer.hpp"
 #include "barretenberg/plonk/composer/plookup_tables/types.hpp"
+#include "barretenberg/plonk/proof_system/constants.hpp"
 #include "barretenberg/stdlib/primitives/field/field.hpp"
 
 namespace plonk {
@@ -27,7 +30,7 @@ template <typename Composer> class plookup_ {
 };
 
 extern template class plookup_<plonk::UltraComposer>;
+extern template class plookup_<honk::StandardHonkComposer>;
 
-typedef plookup_<plonk::UltraComposer> plookup_read;
 } // namespace stdlib
 } // namespace plonk

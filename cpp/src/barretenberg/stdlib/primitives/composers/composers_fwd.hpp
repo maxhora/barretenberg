@@ -10,6 +10,7 @@ class StandardPlonkComposer;
 
 namespace honk {
 class StandardHonkComposer;
+class ExampleHonkComposer;
 } // namespace honk
 
 namespace bonk {}
@@ -17,6 +18,7 @@ namespace bonk {}
 #define EXTERN_STDLIB_TYPE(stdlib_type)                                                                                \
     extern template class stdlib_type<plonk::StandardComposer>;                                                        \
     extern template class stdlib_type<honk::StandardHonkComposer>;                                                     \
+    extern template class stdlib_type<honk::ExampleHonkComposer>;                                                      \
     extern template class stdlib_type<plonk::StandardPlonkComposer>;                                                   \
     extern template class stdlib_type<plonk::TurboComposer>;                                                           \
     extern template class stdlib_type<plonk::UltraComposer>;
@@ -41,4 +43,5 @@ namespace bonk {}
 #define EXTERN_STDLIB_ULTRA_TYPE(stdlib_type) extern template class stdlib_type<plonk::UltraComposer>;
 
 #define EXTERN_STDLIB_ULTRA_TYPE_VA(stdlib_type, ...)                                                                  \
-    extern template class stdlib_type<plonk::UltraComposer, __VA_ARGS__>;
+    extern template class stdlib_type<plonk::UltraComposer, __VA_ARGS__>;                                              \
+    extern template class stdlib_type<honk::ExampleHonkComposer, __VA_ARGS__>;

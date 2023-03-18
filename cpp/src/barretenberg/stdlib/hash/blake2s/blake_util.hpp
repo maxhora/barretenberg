@@ -149,7 +149,7 @@ void g_lookup(field_t<Composer> state[BLAKE3_STATE_SIZE],
               const bool last_update = false)
 {
     typedef field_t<Composer> field_pt;
-
+    using plookup_read = plookup_<Composer>;
     // For simplicity, state[a] is written as `a' in comments.
     // a = a + b + x
     state[a] = state[a].add_two(state[b], x);

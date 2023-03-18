@@ -18,6 +18,7 @@ namespace aes128 {
 constexpr uint32_t AES128_BASE = 9;
 typedef plonk::stdlib::field_t<plonk::UltraComposer> field_t;
 typedef plonk::stdlib::witness_t<plonk::UltraComposer> witness_t;
+using plookup_read = plookup_<plonk::UltraComposer>;
 
 typedef std::pair<field_t, field_t> byte_pair;
 

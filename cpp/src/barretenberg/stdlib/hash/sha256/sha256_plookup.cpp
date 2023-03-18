@@ -42,6 +42,7 @@ void prepare_constants(std::array<field_t<plonk::UltraComposer>, 8>& input)
 sparse_witness_limbs convert_witness(const field_t<plonk::UltraComposer>& w)
 {
     typedef field_t<plonk::UltraComposer> field_pt;
+    using plookup_read = plookup_<plonk::UltraComposer>;
 
     sparse_witness_limbs result(w);
 
@@ -67,6 +68,7 @@ sparse_witness_limbs convert_witness(const field_t<plonk::UltraComposer>& w)
 std::array<field_t<plonk::UltraComposer>, 64> extend_witness(const std::array<field_t<plonk::UltraComposer>, 16>& w_in)
 {
     typedef field_t<plonk::UltraComposer> field_pt;
+    using plookup_read = plookup_<plonk::UltraComposer>;
 
     plonk::UltraComposer* ctx = w_in[0].get_context();
 
@@ -153,6 +155,8 @@ std::array<field_t<plonk::UltraComposer>, 64> extend_witness(const std::array<fi
 
 sparse_value map_into_choose_sparse_form(const field_t<plonk::UltraComposer>& e)
 {
+    using plookup_read = plookup_<plonk::UltraComposer>;
+
     sparse_value result;
     result.normal = e;
     result.sparse = plookup_read::read_from_1_to_2_table(SHA256_CH_INPUT, e);
@@ -162,6 +166,8 @@ sparse_value map_into_choose_sparse_form(const field_t<plonk::UltraComposer>& e)
 
 sparse_value map_into_maj_sparse_form(const field_t<plonk::UltraComposer>& e)
 {
+    using plookup_read = plookup_<plonk::UltraComposer>;
+
     sparse_value result;
     result.normal = e;
     result.sparse = plookup_read::read_from_1_to_2_table(SHA256_MAJ_INPUT, e);
@@ -172,6 +178,7 @@ sparse_value map_into_maj_sparse_form(const field_t<plonk::UltraComposer>& e)
 field_t<plonk::UltraComposer> choose(sparse_value& e, const sparse_value& f, const sparse_value& g)
 {
     typedef field_t<plonk::UltraComposer> field_pt;
+    using plookup_read = plookup_<plonk::UltraComposer>;
 
     const auto lookup = plookup_read::get_lookup_accumulators(SHA256_CH_INPUT, e.normal);
     const auto rotation_coefficients = sha256_tables::get_choose_rotation_multipliers();
@@ -197,6 +204,7 @@ field_t<plonk::UltraComposer> choose(sparse_value& e, const sparse_value& f, con
 field_t<plonk::UltraComposer> majority(sparse_value& a, const sparse_value& b, const sparse_value& c)
 {
     typedef field_t<plonk::UltraComposer> field_pt;
+    using plookup_read = plookup_<plonk::UltraComposer>;
 
     const auto lookup = plookup_read::get_lookup_accumulators(SHA256_MAJ_INPUT, a.normal);
     const auto rotation_coefficients = sha256_tables::get_majority_rotation_multipliers();
