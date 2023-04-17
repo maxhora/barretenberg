@@ -5,7 +5,6 @@
 #include "barretenberg/common/assert.hpp"
 #include "barretenberg/numeric/uint256/uint256.hpp"
 #include "barretenberg/stdlib/primitives/field/field.hpp"
-#pragma GCC diagnostic ignored "-Wimplicitly-unsigned-literal"
 
 namespace proof_system::plonk::stdlib {
 
@@ -31,11 +30,12 @@ field_t<Composer> logic<Composer>::create_logic_constraint(
     field_pt& b,
     size_t num_bits,
     bool is_xor_gate,
-    const std::function<std::pair<field_pt, field_pt>(Composer* ctx, uint256_t, uint256_t)>& get_chunk)
+    const std::function<std::pair<uint256_t, uint256_t>(uint256_t, uint256_t)>& get_chunk)
 {
-    // can't extend past field size!
-    ASSERT(num_bits > 0);
+    // ensure the number of bits don't exceed field size
     ASSERT(num_bits < 254);
+    ASSERT(num_bits > 0);
+
     if (a.is_constant() && b.is_constant()) {
         uint256_t a_native(a.get_value());
         uint256_t b_native(b.get_value());
@@ -56,24 +56,21 @@ field_t<Composer> logic<Composer>::create_logic_constraint(
         return create_logic_constraint(a, b_witness, num_bits, is_xor_gate, get_chunk);
     }
     if constexpr (Composer::type == ComposerType::PLOOKUP) {
+        info(num_bits);
         Composer* ctx = a.get_context();
 
         const size_t num_chunks = (num_bits / 32) + ((num_bits % 32 == 0) ? 0 : 1);
-        uint256_t left((uint256_t)13835058055282163715);
-        uint256_t right((uint256_t)3458764513820540940);
-        info(left);
-        info(right);
-        info(b);
-        info(a);
+        auto left((uint256_t)a.get_value());
+        auto right((uint256_t)b.get_value());
 
         field_pt a_accumulator(barretenberg::fr::zero());
         field_pt b_accumulator(barretenberg::fr::zero());
 
         field_pt res(ctx, 0);
         for (size_t i = 0; i < num_chunks; ++i) {
-
-            auto [a_chunk, b_chunk] = get_chunk(ctx, left, right);
-
+            auto [left_chunk, right_chunk] = get_chunk(left, right);
+            field_pt a_chunk = witness_pt(ctx, left_chunk);
+            field_pt b_chunk = witness_pt(ctx, right_chunk);
             field_pt result_chunk = 0;
             if (is_xor_gate) {
                 result_chunk =
@@ -83,7 +80,7 @@ field_t<Composer> logic<Composer>::create_logic_constraint(
                     stdlib::plookup_read::read_from_2_to_1_table(plookup::MultiTableId::UINT32_AND, a_chunk, b_chunk);
             }
 
-            uint256_t scaling_factor = uint256_t(1) << (32 * i);
+            auto scaling_factor = uint256_t(1) << (32 * i);
             a_accumulator += a_chunk * scaling_factor;
             b_accumulator += b_chunk * scaling_factor;
             res += result_chunk * scaling_factor;
@@ -98,10 +95,8 @@ field_t<Composer> logic<Composer>::create_logic_constraint(
             left = left >> 32;
             right = right >> 32;
         }
-        info(a_accumulator);
-        info(b_accumulator);
-        a_accumulator.assert_equal(a, "not equal");
-        b_accumulator.assert_equal(b, "not equal");
+        a.assert_equal(a_accumulator, "stdlib logic: failed to reconstruct left operand");
+        b.assert_equal(b_accumulator, "stdlib logic: failed to reconstruct right operand");
 
         return res;
     } else {
