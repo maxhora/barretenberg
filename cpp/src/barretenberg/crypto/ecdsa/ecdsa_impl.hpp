@@ -40,7 +40,10 @@ signature construct_signature(const std::string& message, const key_pair<Fr, G1>
     bool is_r_finite = (uint256_t(r_fq) == uint256_t(r_fr));
     bool y_parity = uint256_t(R.y).get_bit(0);
     constexpr uint8_t offset = 27;
-    sig.v = offset + y_parity + static_cast<uint8_t>(2) * !is_r_finite;
+
+    int value = offset + y_parity + static_cast<uint8_t>(2) * !is_r_finite;
+    ASSERT(value <= UINT8_MAX);
+    sig.v = static_cast<uint8_t>(value);
     return sig;
 }
 
